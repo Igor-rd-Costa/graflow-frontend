@@ -20,7 +20,7 @@ export default  function RootLayout({
         className={`h-screen w-screen font-mono`}
       >
         <GlobalContextProvider>
-            <div className="grid grid-rows-[auto_1fr]">
+            <div className="w-full h-full grid grid-rows-[auto_1fr]">
               <Header></Header>
               <main className="h-full w-full">
                 {children}

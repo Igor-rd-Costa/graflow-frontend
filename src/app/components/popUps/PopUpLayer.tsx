@@ -14,7 +14,7 @@ export default function PopUpLayer({children} : {children: React.ReactNode}) {
   
   return (
     <PopUpContext.Provider value={context}>
-      <div className="relative w-screen h-screen">
+      <div className="relative w-full h-full">
         <div className="w-full h-full">
           {children}
         </div>
