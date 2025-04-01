@@ -11,7 +11,7 @@ export default function Page() {
   const {user} = useContext(AuthContext);
   const [ project, setProject ] = useState<Project|null>(null);
 
-  const {projectPopUp } = useContext(PopUpContext);
+  const { contentWrapper, projectPopUp } = useContext(PopUpContext);
 
   useEffect(() => {
     if (user === null) {
@@ -23,8 +23,10 @@ export default function Page() {
       new Promise<void>(async resolve => {
         let p: Project|null;
         do {
+          contentWrapper?.Blur();
           p = await projectPopUp?.Show(false);
         } while(p === null);
+        contentWrapper?.UnBlur();
         setProject(p);
         resolve();
       });

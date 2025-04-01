@@ -1,4 +1,4 @@
-import React, { forwardRef, useImperativeHandle, useRef, useState } from "react";
+import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 import MainButton from "../../MainButton";
 import ProjectItem from "./ProjectItem";
 import { PopUpPropsBase, PopUpActionsBase, ProjectPopUpView } from "../types";
@@ -25,6 +25,23 @@ const ProjectPopUp = forwardRef<PopUpActionsBase, PopUpPropsBase>((props, ref) =
     hide: () => setVisible(false)
   }));
 
+  const onGlobalMouseDown = (event: MouseEvent) => {
+    event.stopPropagation();
+    if (selectedItem !== null) {
+      selectedItem.ele.style.backgroundColor = "";
+      selectedItem.ele.style.border = "";
+      setSelectedItem(null);
+    }
+  };
+
+  useEffect(() => {
+    document.addEventListener('mousedown', onGlobalMouseDown);
+
+    return () => {
+      document.removeEventListener('mousedown', onGlobalMouseDown);
+    }
+  })
+
   if (!visible) {
     return null;
   }
@@ -34,9 +51,10 @@ const ProjectPopUp = forwardRef<PopUpActionsBase, PopUpPropsBase>((props, ref) =
     if (selectedItem === null) {
       return;
     }
-    setVisible(false);
     const p = ProjectService.Load(selectedItem.id);
     if (resolveFn.current !== null && p !== null) {
+      setVisible(false);
+      document.removeEventListener('mousedown', onGlobalMouseDown);
       resolveFn.current(p);
     }
   };
@@ -58,6 +76,8 @@ const ProjectPopUp = forwardRef<PopUpActionsBase, PopUpPropsBase>((props, ref) =
 
     const p = ProjectService.Create(name);
     if (p !== null && resolveFn.current !== null) {
+      setVisible(false);
+      document.removeEventListener('mousedown', onGlobalMouseDown);
       resolveFn.current(p);
     }
   };
@@ -67,8 +87,9 @@ const ProjectPopUp = forwardRef<PopUpActionsBase, PopUpPropsBase>((props, ref) =
     if (!allowCancel) {
       return;
     }
-    setVisible(false);
     if (resolveFn.current !== null) {
+      setVisible(false);
+      document.removeEventListener('mousedown', onGlobalMouseDown);
       resolveFn.current(null);
     }
   }
@@ -83,7 +104,6 @@ const ProjectPopUp = forwardRef<PopUpActionsBase, PopUpPropsBase>((props, ref) =
     item.style.border = "1px solid var(--skyBlue)";
     setSelectedItem({ele: item, id});
   };
-
 
   return (
     <section className="absolute top-2/4 left-2/4 -translate-2/4 w-[50rem] h-[30rem] bg-darkBright shadow-card border border-skyBlue p-4 grid

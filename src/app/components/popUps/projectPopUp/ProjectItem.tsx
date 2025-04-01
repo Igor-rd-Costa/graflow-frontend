@@ -9,7 +9,7 @@ type ProjectItemProps = {
 
 const ProjectItem = forwardRef<null, ProjectItemProps>((props, ref) => {
   //bg-[#97B4DE55]
-  const onClick = (event: React.MouseEvent) => {
+  const onMouseDown = (event: React.MouseEvent) => {
     event.stopPropagation();
     const t = event.currentTarget as HTMLElement;
     if (props.onClick) {
@@ -25,8 +25,8 @@ const ProjectItem = forwardRef<null, ProjectItemProps>((props, ref) => {
   }
 
   return (
-    <div className="font-mono w-[16rem] h-[3.5rem] cursor-pointer border border-transparent hover:border-skyBlue" 
-    onClick={onClick} onDoubleClick={onDoubleClick}>
+    <div className="font-mono w-[16rem] h-[3.5rem] cursor-pointer border border-transparent select-none hover:border-skyBlue" 
+    onMouseDown={onMouseDown} onDoubleClick={onDoubleClick}>
       <div className="m-1 flex gap-x-2">
         <div className="h-[3rem] w-[3rem] border"></div>
         <div className="h-full">

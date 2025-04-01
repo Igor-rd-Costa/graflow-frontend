@@ -34,8 +34,36 @@ export type PopUpPropsBase = {
 }
 
 export type PopUpContextType = {
+  contentWrapper?: ContentWrapperRef,
   projectPopUp?: ProjectPopUpRef
 };
+
+// ContentWrapper
+
+export interface ContentWrapperActions {
+  blur: () => void,
+  unBlur: () => void
+}
+
+export type ContentWrapperProps = {
+  children: React.ReactNode
+}
+
+export class ContentWrapperRef
+{
+  private readonly ref: React.RefObject<ContentWrapperActions|null>;
+  public constructor(ref: React.RefObject<ContentWrapperActions|null>) {
+    this.ref = ref;
+  }
+
+  Blur() {
+    this.ref.current?.blur();
+  }
+
+  UnBlur() {
+    this.ref.current?.unBlur();
+  }
+}
 
 
 // ProjectPopUp
