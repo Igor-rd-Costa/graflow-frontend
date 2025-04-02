@@ -2,6 +2,7 @@ import React, { createContext, useEffect, useState } from "react";
 import Auth, { User } from "@/services/Auth";
 import Http from "@/services/Http";
 import PopUpLayer from "./components/popUps/PopUpLayer";
+import { Project } from "@/services/Project";
 
 function initServices() {
   Http.Init();
@@ -13,14 +14,25 @@ export type AuthContextType = {
   setUser: (value: User|null) => void
 };
 
+export type ProjectContextType = {
+  project: Project|null,
+  setProject: (value: Project|null) => void
+};
+
 export const AuthContext = createContext<AuthContextType>({
   user: null,
   setUser: () => {}
 });
 
+export const ProjectContext = createContext<ProjectContextType>({
+  project: null,
+  setProject: () => {}
+});
+
 export default function GlobalContextProvider({children} : {children?: React.ReactNode}) {
 
   const [user, setUser ] = useState<User|null>(null);
+  const [project, setProject ] = useState<Project|null>(null);
 
   useEffect(() => {
     initServices();
@@ -35,9 +47,11 @@ export default function GlobalContextProvider({children} : {children?: React.Rea
   return (
     <>
       <AuthContext.Provider value={{user, setUser}}>
-        <PopUpLayer>
-          {children}
-        </PopUpLayer>
+        <ProjectContext.Provider value={{project, setProject}}>
+          <PopUpLayer>
+            {children}
+          </PopUpLayer>
+        </ProjectContext.Provider>
       </AuthContext.Provider>
     </>
   )

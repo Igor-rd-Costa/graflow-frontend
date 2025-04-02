@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useContext, useEffect, useState } from "react"
-import { AuthContext } from "../GlobalContextProvider"
+import { AuthContext, ProjectContext } from "../GlobalContextProvider"
 import { useRouter } from "next/navigation";
 import { PopUpContext } from "../components/popUps/PopUpLayer";
 import ProjectService, {Project} from "@/services/Project";
@@ -9,23 +9,37 @@ import ProjectService, {Project} from "@/services/Project";
 export default function Page() {
   const router = useRouter();
   const {user} = useContext(AuthContext);
-  const [ project, setProject ] = useState<Project|null>(null);
+  const { project, setProject } = useContext(ProjectContext);
 
   const { contentWrapper, projectPopUp } = useContext(PopUpContext);
 
   useEffect(() => {
     if (user === null) {
       router.push("/login");
+      return;
     }
-     
-    const project = ProjectService.Project();
     if (project === null) {
       new Promise<void>(async resolve => {
-        let p: Project|null;
-        do {
+        let p: Project|null = ProjectService.FromStorage();
+        if (p !== null) {
+          if (p.user_id !== user!.id) {
+            ProjectService.SaveToStorage(null);
+            p = null;
+          } else {
+            const lastUpdate = await ProjectService.GetUpdatedAt(p.id);
+            if (lastUpdate && p.updated_at < lastUpdate) {
+              p = await ProjectService.Load(p.id);
+            }
+          }
+        }
+        p = null;
+        while(p === null) {
           contentWrapper?.Blur();
           p = await projectPopUp?.Show(false);
-        } while(p === null);
+          if (p !== null) {
+            ProjectService.SaveToStorage(p);
+          }
+        }
         contentWrapper?.UnBlur();
         setProject(p);
         resolve();

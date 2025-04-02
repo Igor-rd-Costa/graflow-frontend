@@ -1,16 +1,19 @@
-import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
+import React, { forwardRef, useContext, useEffect, useImperativeHandle, useRef, useState } from "react";
 import MainButton from "../../MainButton";
 import ProjectItem from "./ProjectItem";
 import { PopUpPropsBase, PopUpActionsBase, ProjectPopUpView } from "../types";
 import FormInput from "../../FormInput";
 import ProjectService, { Project } from "@/services/Project";
 import SecondaryButton from "../../SecondaryButton";
+import { AuthContext } from "@/app/GlobalContextProvider";
 
 const ProjectPopUp = forwardRef<PopUpActionsBase, PopUpPropsBase>((props, ref) => {
+  const {user} = useContext(AuthContext);
   const [ visible, setVisible ] = useState<boolean>(false);
   const [allowCancel, setAllowCancel ] = useState<boolean>(true);
   const [ view, setView ] = useState<ProjectPopUpView>('load');
   const [selectedItem, setSelectedItem ] = useState<{ele: HTMLElement, id: string}|null>(null);
+  const [projectsInfo, setProjectsInfo] = useState<Project[]>([]);
 
   let resolveFn = useRef<((value: Project | PromiseLike<Project|null> | null) => void)|null>(null);
 
@@ -40,44 +43,30 @@ const ProjectPopUp = forwardRef<PopUpActionsBase, PopUpPropsBase>((props, ref) =
     return () => {
       document.removeEventListener('mousedown', onGlobalMouseDown);
     }
-  })
+  }, []);
+
+  useEffect(() => {
+    if (user === null || view !== 'load') {
+      return;
+    }
+    ProjectService.GetProjects().then(infos => {
+      setProjectsInfo(infos);
+    });
+  }, [view, user])
 
   if (!visible) {
     return null;
   }
 
-  const onLoad = (event: React.MouseEvent) => {
+  const onLoad = async (event: React.MouseEvent) => {
     event.stopPropagation();
+    event.preventDefault();
     if (selectedItem === null) {
       return;
     }
-    const p = ProjectService.Load(selectedItem.id);
+    const p = await ProjectService.Load(selectedItem.id);
     if (resolveFn.current !== null && p !== null) {
       setVisible(false);
-      document.removeEventListener('mousedown', onGlobalMouseDown);
-      resolveFn.current(p);
-    }
-  };
-
-  const onCreate = (event: React.FormEvent) => {
-    event.preventDefault();
-    if (event.target === null) {
-      return;
-    }
-    const t = event.target as HTMLFormElement;
-    const input = t.querySelector('input');
-    if (input === null) {
-      return;
-    }
-    const name = input.value;
-    if (name === "") {
-      return;
-    }
-
-    const p = ProjectService.Create(name);
-    if (p !== null && resolveFn.current !== null) {
-      setVisible(false);
-      document.removeEventListener('mousedown', onGlobalMouseDown);
       resolveFn.current(p);
     }
   };
@@ -89,7 +78,6 @@ const ProjectPopUp = forwardRef<PopUpActionsBase, PopUpPropsBase>((props, ref) =
     }
     if (resolveFn.current !== null) {
       setVisible(false);
-      document.removeEventListener('mousedown', onGlobalMouseDown);
       resolveFn.current(null);
     }
   }
@@ -105,6 +93,43 @@ const ProjectPopUp = forwardRef<PopUpActionsBase, PopUpPropsBase>((props, ref) =
     setSelectedItem({ele: item, id});
   };
 
+  const onItemSelect = (id: string) => {
+    ProjectService.Load(id).then(project => {
+      if (project === null) {
+        return;
+      }
+      if (selectedItem !== null && resolveFn.current !== null) {
+        selectedItem.ele.style.backgroundColor = "";
+        selectedItem.ele.style.border = "";
+        setVisible(false);
+        resolveFn.current(project);
+      }
+    });
+  };
+
+  const onCreateProjectSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    const t = event.target as HTMLFormElement;
+
+    const nameInput = t.querySelector('input');
+    if (nameInput === null) {
+      return;
+    }
+
+    const name = nameInput.value.trim();
+    if (name.length === 0) {
+      return;
+    }
+
+    const p = await ProjectService.Create(name);
+    if (p !== null && resolveFn.current !== null) {
+      setVisible(false);
+      resolveFn.current(p);
+    }
+  };
+
   return (
     <section className="absolute top-2/4 left-2/4 -translate-2/4 w-[50rem] h-[30rem] bg-darkBright shadow-card border border-skyBlue p-4 grid
     grid-rows-[auto_1fr] grid-cols-[auto_1fr] gap-4">
@@ -112,35 +137,35 @@ const ProjectPopUp = forwardRef<PopUpActionsBase, PopUpPropsBase>((props, ref) =
         {view === 'load' ? <>Load Project</> : <>Create Project</>}
       </h2>
       { view === 'load' ?
-        <div className="w-[16.5rem] row-start-2 col-start-1 flex flex-col gap-y-1 h-full overflow-y-scroll">
-          {
-            ProjectService.GetProjectsInfo().map((item) => {
-              return (<ProjectItem key={item.id} info={item} onClick={onItemClick}></ProjectItem>)
-            })
-          }
-        </div> 
-        :
-        <div className="w-[18rem] row-start-2 col-start-1">
-          <form>
-            <FormInput label="Name" type="text"></FormInput>
-          </form>
-        </div>
-      }
-      <div className="w-[18rem] flex gap-2 row-start-3 col-start-1 col-end-3">
-        {
-          view === 'load' ?
           <>
+          <div className="w-[16.5rem] row-start-2 col-start-1 flex flex-col gap-y-1 h-full overflow-y-scroll">
+            {
+              projectsInfo.map((item) => {
+                return (<ProjectItem key={item.id} project={item} onClick={onItemClick} onSelect={onItemSelect}></ProjectItem>)
+              })
+            }
+          </div>
+          <div className="w-[18rem] flex gap-2 row-start-3 col-start-1 col-end-3">
             <MainButton type="button" disabled={selectedItem === null}   onClick={onLoad}>Load</MainButton>
             <MainButton type="button" onClick={() => setView('create')}>Create</MainButton>
+            <SecondaryButton type="button" disabled={!allowCancel} onClick={onCancel}>Cancel</SecondaryButton>
+          </div>
           </>
-          :
-          <>
-            <MainButton type="button" onClick={() => {}}>Create</MainButton>
-            <MainButton type="button"  onClick={() => setView('load')}>Load</MainButton>
-          </>
-        }
-        <SecondaryButton type="button" disabled={!allowCancel} onClick={onCancel}>Cancel</SecondaryButton>
-      </div>
+        :
+        <>
+          <div className="w-[18rem] row-start-2 col-start-1">
+            <form className="h-full grid grid-rows-[auto_1fr_auto]" onSubmit={onCreateProjectSubmit}>
+              <FormInput label="Name" type="text"></FormInput>
+            <div className="w-[18rem] flex gap-2 row-start-3">
+              <MainButton type="submit">Create</MainButton>
+              <MainButton type="button" onClick={() => setView('load')}>Load</MainButton>
+              <SecondaryButton type="button" disabled={!allowCancel} onClick={onCancel}>Cancel</SecondaryButton>
+            </div>
+            </form>
+          </div>
+        </>
+      }
+      
     </section>
   )
 });

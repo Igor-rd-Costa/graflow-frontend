@@ -1,9 +1,7 @@
-import { useRouter } from "next/navigation";
 import Http, { backendBaseUrl, backendUrl } from "./Http";
-import { useState } from "react";
 
 export type User = {
-  id: number,
+  id: string,
   username: string,
   email: string,
 }
@@ -17,46 +15,45 @@ export default class Auth
   }
 
   public static async User() : Promise<User|null> {
-    return await Http.Get(`${backendUrl}/auth/user`);
+    const r = await Http.Get<User>(`${backendUrl}/auth/user`);
+    if (r.Success()) {
+      return r.Result();
+    }
+    return null;
   }
 
-  public static Login(username: string, password: string): Promise<User|null> {
-    return new Promise<User|null>(async resolve => {
-      await this.GetCSRFToken();
-      Http.Post<User>(`${backendUrl}/auth/login`, {username, password})
-      .then(user => {
-        resolve(user);
-      })
-      .catch(_ => {
-        //console.error(err)
-        resolve(null);
-      });
-    });
+  public static async Login(username: string, password: string): Promise<User|null> {
+    const csrfRequest = await this.GetCSRFToken();
+    if (!csrfRequest.Success()) {
+      //TODO Handle csrf request error
+      return null;
+    }
+    const r = await Http.Post<User>(`${backendUrl}/auth/login`, {username, password});
+    if (r.Success()) {
+      return r.Result();
+    }
+    return null;
   }
 
-  public static Logout() : Promise<boolean> {
-    return new Promise<boolean>(resolve => {
-      Http.Post(`${backendUrl}/auth/logout`)
-      .then(_ => {
-        resolve(true);
-      })
-      .catch(_ => {
-        resolve(false);
-      })
-    });
+  public static async Logout() : Promise<boolean> {
+    const r = await Http.Post(`${backendUrl}/auth/logout`);
+    if (r.Success()) {
+      return true;
+    }
+    return false;
   }
 
-  public static Register(username: string, email: string, password: string): Promise<User|null> {
-    return new Promise<User|null>(async resolve => {
-      await this.GetCSRFToken();
-      Http.Post<User>(`${backendUrl}/auth/register`, {username, email, password})
-      .then(user => {
-        resolve(user);
-      })
-      .catch(_ => {
-        resolve(null);
-      });
-    });
+  public static async Register(username: string, email: string, password: string): Promise<User|null> {
+    const csrfRequest = await this.GetCSRFToken();
+    if (!csrfRequest.Success()) {
+      //TODO Handle csrf request error
+      return null;
+    }
+    const r = await Http.Post<User>(`${backendUrl}/auth/register`, {username, email, password});
+    if (r.Success()) {
+      return r.Result();
+    }
+    return null;
   }
 
   private static GetCSRFToken() {
