@@ -32,7 +32,6 @@ export default function Page() {
             }
           }
         }
-        p = null;
         while(p === null) {
           contentWrapper?.Blur();
           p = await projectPopUp?.Show(false);
