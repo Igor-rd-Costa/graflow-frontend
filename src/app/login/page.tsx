@@ -9,14 +9,14 @@ import Auth from "@/services/Auth";
 export default function Home() {
   
   const router = useRouter();
-  const {user, setUser} = useContext(AuthContext);
+  const {userInfo, setUserInfo} = useContext(AuthContext);
 
   useEffect(() => {
-    if (user !== null) {
+    if (userInfo !== null) {
       router.push("/editor");
       return;
     }
-  }, [user])
+  }, [userInfo])
 
   const goToRegister = (event: React.MouseEvent) => {
     event.preventDefault();
@@ -39,7 +39,7 @@ export default function Home() {
   
     const u = await Auth.Login(username, password);
     if (u !== null) {
-      setUser(u);
+      setUserInfo({user: u, preferences: {}});
       router.push("/editor");
     } else {
       console.log("Bad login!");

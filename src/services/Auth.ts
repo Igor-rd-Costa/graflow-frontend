@@ -1,9 +1,19 @@
+import { EditorSettings } from "@/app/editor/page";
 import Http, { backendBaseUrl, backendUrl } from "./Http";
 
 export type User = {
   id: string,
   username: string,
   email: string,
+}
+
+export type UserPreferences = {
+  editor?: EditorSettings
+}
+
+export type UserInfo = {
+  user: User,
+  preferences: UserPreferences
 }
 
 

@@ -10,7 +10,7 @@ import ProjectService, { Project } from "@/services/Project";
 
 export default function Header() {
   const router = useRouter();
-  const {user, setUser} = useContext(AuthContext);
+  const {userInfo, setUserInfo} = useContext(AuthContext);
   const {projectPopUp, contentWrapper} = useContext(PopUpContext);
   const {project, setProject} = useContext(ProjectContext);
 
@@ -18,7 +18,7 @@ export default function Header() {
     event.stopPropagation();
 
     if (await Auth.Logout()) {
-      setUser(null);
+      setUserInfo(null);
       router.push("/login");
     }
   }
@@ -45,7 +45,7 @@ export default function Header() {
           </h1>
 
           <div className="flex items-center col-start-3">
-            {user !== null ?
+            {userInfo !== null ?
               <ul className="relative w-[6rem] h-full">
                 <MenuItem heading="Project" isTopLevel={true}>
                   <MenuItem heading="Load" onMouseDown={onProjectLoadItemMouseDown}></MenuItem>
@@ -56,7 +56,7 @@ export default function Header() {
           </div>
           
           <div className="content-center items-center flex gap-4 text-[0.9rem] col-start-5">
-            {user === null 
+            {userInfo === null 
             ?<>
               <button className=" cursor-pointer hover:text-white ">
                 <Link href="/login">Login</Link>

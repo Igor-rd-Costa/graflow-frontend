@@ -10,13 +10,13 @@ import { AuthContext } from "../GlobalContextProvider";
 
 export default function Home() {
   const router = useRouter();
-  const {user, setUser} = useContext(AuthContext);
+  const {userInfo, setUserInfo} = useContext(AuthContext);
 
   useEffect(() => {
-    if (user !== null) {
+    if (userInfo !== null) {
       router.push("/editor");
     }
-  }, [user])
+  }, [userInfo])
 
   const goToLogin = (event: React.MouseEvent) => {
     event.preventDefault();
@@ -39,7 +39,7 @@ export default function Home() {
     
     const u = await Auth.Register(username, email, password);
     if (u !== null) {
-      setUser(u);
+      setUserInfo({user: u, preferences: {}});
       router.push('/editor');
     }
   }

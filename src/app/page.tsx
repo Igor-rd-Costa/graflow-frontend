@@ -6,13 +6,13 @@ import { useRouter } from "next/navigation";
 
 export default function Home() {
   const router = useRouter();
-  const {user} = useContext(AuthContext);
+  const {userInfo} = useContext(AuthContext);
 
   useEffect(() => {
-    if (user !== null) {
+    if (userInfo !== null) {
       router.push("/editor");
     }
-  }, [user])
+  }, [userInfo])
 
   return (
     <div>

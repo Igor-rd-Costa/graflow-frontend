@@ -1,8 +1,9 @@
 import React, { createContext, useEffect, useState } from "react";
-import Auth, { User } from "@/services/Auth";
+import Auth, { User, UserInfo } from "@/services/Auth";
 import Http from "@/services/Http";
 import PopUpLayer from "./components/popUps/PopUpLayer";
 import { Project } from "@/services/Project";
+import { DEFAULT_EDITOR_SETTINGS, EditorSettings } from "./editor/page";
 
 function initServices() {
   Http.Init();
@@ -10,8 +11,8 @@ function initServices() {
 }
 
 export type AuthContextType = {
-  user: User|null,
-  setUser: (value: User|null) => void
+  userInfo: UserInfo|null,
+  setUserInfo: (value: UserInfo|null) => void
 };
 
 export type ProjectContextType = {
@@ -19,9 +20,14 @@ export type ProjectContextType = {
   setProject: (value: Project|null) => void
 };
 
+export type EditorSettingsContextType = {
+  settings: EditorSettings|null,
+  setSettings: (value: EditorSettings) => void
+};
+
 export const AuthContext = createContext<AuthContextType>({
-  user: null,
-  setUser: () => {}
+  userInfo: null,
+  setUserInfo: () => {}
 });
 
 export const ProjectContext = createContext<ProjectContextType>({
@@ -31,27 +37,28 @@ export const ProjectContext = createContext<ProjectContextType>({
 
 export default function GlobalContextProvider({children} : {children?: React.ReactNode}) {
 
-  const [user, setUser ] = useState<User|null>(null);
+  const [userInfo, setUserInfo ] = useState<UserInfo|null>(null);
   const [project, setProject ] = useState<Project|null>(null);
 
   useEffect(() => {
     initServices();
     Auth.User().then(u => {
-      if ((u === null && user === null) || (user?.id === u?.id)) {
+      console.log("Got", u);
+      if ((u === null && userInfo === null) || (userInfo?.user.id === u?.id)) {
         return;
       }
-      setUser(u);
+      setUserInfo({user: u!, preferences: {}});
     });
-  });
+  }, []);
   
   return (
     <>
-      <AuthContext.Provider value={{user, setUser}}>
-        <ProjectContext.Provider value={{project, setProject}}>
-          <PopUpLayer>
-            {children}
-          </PopUpLayer>
-        </ProjectContext.Provider>
+      <AuthContext.Provider value={{userInfo, setUserInfo}}>
+      <ProjectContext.Provider value={{project, setProject}}>
+        <PopUpLayer>
+          {children}
+        </PopUpLayer>
+      </ProjectContext.Provider>
       </AuthContext.Provider>
     </>
   )
