@@ -43,7 +43,6 @@ export default function GlobalContextProvider({children} : {children?: React.Rea
   useEffect(() => {
     initServices();
     Auth.User().then(u => {
-      console.log("Got", u);
       if ((u === null && userInfo === null) || (userInfo?.user.id === u?.id)) {
         return;
       }

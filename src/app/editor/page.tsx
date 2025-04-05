@@ -18,20 +18,29 @@ export type Dimensions = {
 
 
 export type EditorSettings = {
-  dimensions: {
-    outliner: Dimensions,
-    view: Dimensions,
-    properties: Dimensions,
-    timeline: Dimensions
+  outliner: {
+    dimensions: Dimensions
+  },
+  view: {
+  },
+  properties: {
+    dimensions: Dimensions
+  },
+  timeline: {
+    dimensions: Dimensions
   }
 }
 
 export const DEFAULT_EDITOR_SETTINGS: EditorSettings = {
-  dimensions: {
-    outliner: {width: 86},
-    view: {},
-    properties: {width: 244},
-    timeline: {height: 244}
+  outliner: {
+    dimensions: {width: 322}
+  },
+  view: {},
+  properties: {
+    dimensions: {width: 244},
+  },
+  timeline: {
+    dimensions: {height: 244}
   }
 };
 
@@ -100,7 +109,7 @@ export default function Page() {
       return;
     }
     editorWrapper.current.style.gridTemplateColumns = 
-    `${editorSettings.current.dimensions.outliner.width}px 5px 1fr 5px ${editorSettings.current.dimensions.properties.width}px`;
+    `${editorSettings.current.outliner.dimensions.width}px 5px 1fr 5px ${editorSettings.current.properties.dimensions.width}px`;
   }
 
   const setGridRows = () => {
@@ -108,34 +117,42 @@ export default function Page() {
       return;
     }
     editorWrapper.current.style.gridTemplateRows = 
-    `1fr 5px ${editorSettings.current.dimensions.timeline.height}px`;
+    `1fr 5px ${editorSettings.current.timeline.dimensions.height}px`;
   }
 
   const onOutlinerResize = (offset: {x:number,y:number}) => {
-    if (editorWrapper.current === null || editorSettings.current.dimensions.outliner.width === undefined) {
+    if (editorWrapper.current === null || editorSettings.current.outliner.dimensions.width === undefined) {
       return;
     }
     resizeDelta.current += offset.x;
-    if (Math.abs(resizeDelta.current) > 90) {
-      editorSettings.current.dimensions.outliner.width += resizeDelta.current;
-      resizeDelta.current = 0;
+    if (Math.abs(resizeDelta.current) > (8+70)) {
+      const delta = (resizeDelta.current > 0 ? 78 : -78);
+      editorSettings.current.outliner.dimensions.width += delta;
+      if (editorSettings.current.outliner.dimensions.width < 88) {
+        editorSettings.current.outliner.dimensions.width = 88;
+      } else if (editorSettings.current.outliner.dimensions.width > 400) {
+        editorSettings.current.outliner.dimensions.width = 400;
+      } 
+      else {
+        resizeDelta.current = 0;
+      }
       setGridCols();
     }
   };
 
   const onPropertiesResize = (offset: {x:number,y:number}) => {
-    if (editorWrapper.current === null || editorSettings.current.dimensions.properties.width === undefined) {
+    if (editorWrapper.current === null || editorSettings.current.properties.dimensions.width === undefined) {
       return;
     }
-    editorSettings.current.dimensions.properties.width -= offset.x;
+    editorSettings.current.properties.dimensions.width -= offset.x;
     setGridCols();
   };
 
   const onTimelineResize = (offset: {x:number,y:number}) => {
-    if (editorWrapper.current === null || editorSettings.current.dimensions.timeline.height === undefined) {
+    if (editorWrapper.current === null || editorSettings.current.timeline.dimensions.height === undefined) {
       return;
     }
-    editorSettings.current.dimensions.timeline.height += offset.y;
+    editorSettings.current.timeline.dimensions.height += offset.y;
     setGridRows();
   };
 
@@ -148,7 +165,6 @@ export default function Page() {
     return;
   }
 
-  editorSettings.current.dimensions.outliner.width = 244;
   return (
     <div id="hello" style={{gridTemplateColumns: `auto 5px 1fr 5px auto`}} 
     ref={editorWrapper} className="w-full p-2 h-full grid grid-rows-[1fr_5px_auto]">
