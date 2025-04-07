@@ -1,11 +1,11 @@
 "use client"
 
-import React, { useContext, useEffect, useRef, useState } from "react"
+import React, { createContext, RefObject, useContext, useEffect, useRef, useState } from "react"
 import { AuthContext, ProjectContext } from "../GlobalContextProvider"
 import { useRouter } from "next/navigation";
 import { PopUpContext } from "../components/popUps/PopUpLayer";
 import ProjectService, {Project} from "@/services/Project";
-import OutlinerPanel from "../components/editor/outlinerPanel/OutlinerPanel";
+import OutlinerPanel, { OutlinerActions, OutlinerView, OutlinerViewMode, OutlinerViewSize } from "../components/editor/outlinerPanel/OutlinerPanel";
 import ViewPanel from "../components/editor/viewPanel/ViewPanel";
 import PropertiesPanel from "../components/editor/propertiesPanel/PropertiesPanel";
 import TimelinePanel from "../components/editor/timelinePanel/TimelinePanel";
@@ -20,6 +20,10 @@ export type Dimensions = {
 export type EditorSettings = {
   outliner: {
     dimensions: Dimensions
+    display: {
+      size: 'L'|'M'|'S',
+      mode: 'Grid'|'List',
+    }
   },
   view: {
   },
@@ -33,7 +37,11 @@ export type EditorSettings = {
 
 export const DEFAULT_EDITOR_SETTINGS: EditorSettings = {
   outliner: {
-    dimensions: {width: 322}
+    dimensions: {width: 296},
+    display: {
+      size: 'M',
+      mode: 'Grid'
+    }
   },
   view: {},
   properties: {
@@ -44,14 +52,23 @@ export const DEFAULT_EDITOR_SETTINGS: EditorSettings = {
   }
 };
 
+type OutlinerSettings = {
+  width: number,
+  size: OutlinerViewSize,
+  mode: OutlinerViewMode
+}
+
 export default function Page() {
   const router = useRouter();
+  
   const {userInfo} = useContext(AuthContext);
   const { contentWrapper, projectPopUp } = useContext(PopUpContext);
   const { project, setProject } = useContext(ProjectContext);
+  
   const editorWrapper = useRef<HTMLDivElement>(null);
   const editorSettings = useRef<EditorSettings>(DEFAULT_EDITOR_SETTINGS);
   const resizeDelta = useRef<number>(0);
+  const outlinerPanel = useRef<OutlinerActions>(null);
 
   useEffect(() => {
     if (userInfo === null) {
@@ -91,7 +108,6 @@ export default function Page() {
       return;
     }
     
-    localStorage.removeItem('editorSettings');
     const editorSettingsStr = localStorage.getItem('editorSettings');  
     if (editorSettingsStr !== null) {
       const eSettings = JSON.parse(editorSettingsStr) as EditorSettings;
@@ -125,18 +141,21 @@ export default function Page() {
       return;
     }
     resizeDelta.current += offset.x;
-    if (Math.abs(resizeDelta.current) > (8+70)) {
-      const delta = (resizeDelta.current > 0 ? 78 : -78);
+    const itemMaxWidth = 90;
+    const itemWPlusGap = 94;
+    if (Math.abs(resizeDelta.current) > itemWPlusGap) {
+      const delta = (resizeDelta.current > 0 ? itemWPlusGap : -itemWPlusGap);
       editorSettings.current.outliner.dimensions.width += delta;
-      if (editorSettings.current.outliner.dimensions.width < 88) {
-        editorSettings.current.outliner.dimensions.width = 88;
-      } else if (editorSettings.current.outliner.dimensions.width > 400) {
-        editorSettings.current.outliner.dimensions.width = 400;
+      if (editorSettings.current.outliner.dimensions.width < (itemMaxWidth + 18)) {
+        editorSettings.current.outliner.dimensions.width = itemMaxWidth + 18;
+      } else if (editorSettings.current.outliner.dimensions.width > 390) {
+        editorSettings.current.outliner.dimensions.width = 390;
       } 
       else {
         resizeDelta.current = 0;
       }
       setGridCols();
+      outlinerPanel.current?.updateSize();
     }
   };
 
@@ -166,9 +185,9 @@ export default function Page() {
   }
 
   return (
-    <div id="hello" style={{gridTemplateColumns: `auto 5px 1fr 5px auto`}} 
+    <div style={{gridTemplateColumns: `auto 5px 1fr 5px auto`}} 
     ref={editorWrapper} className="w-full p-2 h-full grid grid-rows-[1fr_5px_auto]">
-      <OutlinerPanel className="col-start-1 row-start-1 row-end-4"></OutlinerPanel>
+      <OutlinerPanel ref={outlinerPanel} className="col-start-1 row-start-1 row-end-4"></OutlinerPanel>
       <ResizeBar className="col-start-2 row-start-1 row-end-4 cursor-col-resize" onResize={onOutlinerResize} onResizeEnd={onResizeEnd}></ResizeBar>
       <ViewPanel className="col-start-3 row-start-1"></ViewPanel>
       <ResizeBar className="col-start-4 row-start-1 row-end-4 cursor-col-resize" onResize={onPropertiesResize} onResizeEnd={onResizeEnd}></ResizeBar>

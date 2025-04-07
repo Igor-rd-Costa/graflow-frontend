@@ -8,7 +8,7 @@ import SecondaryButton from "../../SecondaryButton";
 import { AuthContext } from "@/app/GlobalContextProvider";
 
 const ProjectPopUp = forwardRef<PopUpActionsBase, PopUpPropsBase>((props, ref) => {
-  const {user} = useContext(AuthContext);
+  const {userInfo} = useContext(AuthContext);
   const [ visible, setVisible ] = useState<boolean>(false);
   const [allowCancel, setAllowCancel ] = useState<boolean>(true);
   const [ view, setView ] = useState<ProjectPopUpView>('load');
@@ -46,13 +46,13 @@ const ProjectPopUp = forwardRef<PopUpActionsBase, PopUpPropsBase>((props, ref) =
   }, []);
 
   useEffect(() => {
-    if (user === null || view !== 'load') {
+    if (userInfo === null || view !== 'load') {
       return;
     }
     ProjectService.GetProjects().then(infos => {
       setProjectsInfo(infos);
     });
-  }, [view, user])
+  }, [view, userInfo])
 
   if (!visible) {
     return null;
